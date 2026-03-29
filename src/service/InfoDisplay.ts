@@ -8,7 +8,7 @@ export class InfoDisplay {
     private infoScore: PIXI.Text;
     private infoLives: PIXI.Text;
     private pixiApp: PIXI.Application;
-    private floatingNotificationTickers: ((delta: number) => void)[] = [];
+    private floatingNotifications: { ticker: (delta: number) => void, text: PIXI.Text }[] = [];
 
     public get score(): number {
         return this._score;
@@ -63,13 +63,13 @@ export class InfoDisplay {
 
             if (elapsed >= duration) {
                 this.pixiApp.ticker.remove(ticker);
-                this.floatingNotificationTickers = this.floatingNotificationTickers.filter(t => t !== ticker);
+                this.floatingNotifications = this.floatingNotifications.filter(n => n.ticker !== ticker);
                 this.pixiApp.stage.removeChild(notification);
                 notification.destroy();
             }
         };
 
-        this.floatingNotificationTickers.push(ticker);
+        this.floatingNotifications.push({ ticker, text: notification });
         this.pixiApp.ticker.add(ticker);
     }
 
@@ -103,9 +103,11 @@ export class InfoDisplay {
     public clear(app: PIXI.Application): void {
         app.stage.removeChild(this.infoLives);
         app.stage.removeChild(this.infoScore);
-        this.floatingNotificationTickers.forEach(ticker => {
-            this.pixiApp.ticker.remove(ticker);
+        this.floatingNotifications.forEach(n => {
+            this.pixiApp.ticker.remove(n.ticker);
+            app.stage.removeChild(n.text);
+            n.text.destroy();
         });
-        this.floatingNotificationTickers = [];
+        this.floatingNotifications = [];
     }
 }
