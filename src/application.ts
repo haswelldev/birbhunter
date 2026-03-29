@@ -28,6 +28,10 @@ export class Application {
     private startGameScreen: StartGameScreen;
     private endGameScreen: EndGameScreen;
     private stopTimeClock: PIXI.Sprite;
+    private menuButton: PIXI.Text;
+    private gameStarted: boolean = false;
+    private autoPaused: boolean = false;
+    private highScore: number = 0;
 
     @inject(Types.ModelCreator) private modelCreator: ModelCreator;
     @inject(Types.SoundBoard) private soundBoard: SoundBoard;
@@ -40,10 +44,12 @@ export class Application {
     }
 
     private tickerCallback = () => {
+        if (this.gamePaused) return;
         this.birbs.forEach((birb, index) => this.birbTickHandler(birb, index));
     };
 
     public run(): void {
+        this.highScore = parseInt(localStorage.getItem('highScore') || '0');
         // screen.orientation.lock('landscape'); // Cordova plugin
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
         this.birbBounds = new PIXI.Rectangle(
@@ -74,35 +80,118 @@ export class Application {
         this.stopTimeClock.x = window.innerWidth / 2;
         this.stopTimeClock.y = window.innerHeight - (window.innerHeight * 13.5 / 100);
 
+        this.menuButton = new PIXI.Text('Menu', { fontSize: 24, fill: 0xffffff });
+        this.menuButton.x = 20;
+        this.menuButton.y = 20;
+        this.menuButton.interactive = true;
+        this.menuButton.cursor = 'pointer';
+        this.menuButton.on('pointerdown', (e) => {
+            e.stopPropagation();
+            this.togglePause();
+        });
+
+        this.app.stage.addChild(this.menuButton);
+        this.menuButton.visible = false;
         this.app.stage.addChild(this.startGameScreen);
 
-        this.stopTimeClock.on('mousedown', this.stopTime.bind(this));
-        this.stopTimeClock.on('touchstart', this.stopTime.bind(this));
-        this.startGameScreen.on('mousedown', this.init.bind(this));
-        this.startGameScreen.on('touchstart', this.init.bind(this));
-        this.endGameScreen.on('mousedown', this.init.bind(this));
-        this.endGameScreen.on('touchstart', this.init.bind(this));
+        this.startGameScreen.setVolumes(this.soundBoard.getBackgroundVolume(), this.soundBoard.getSFXVolume());
+
+        this.stopTimeClock.on('pointerdown', this.stopTime.bind(this));
+
+        this.startGameScreen.onStartGame = () => {
+            if (this.gameStarted) {
+                this.togglePause();
+            } else {
+                this.init();
+            }
+        };
+
+        this.startGameScreen.onStartNewGame = () => {
+            this.clear();
+            this.init();
+        };
+
+        this.endGameScreen.onStartNewGame = () => {
+            this.app.stage.removeChild(this.endGameScreen);
+            this.clear();
+            this.init();
+        };
+
+        this.endGameScreen.onShowSettings = () => {
+            this.app.stage.removeChild(this.endGameScreen);
+            this.app.stage.addChild(this.startGameScreen);
+            this.startGameScreen.setResume(false);
+            // Show settings menu in StartGameScreen
+            (this.startGameScreen as any)._mainMenu.visible = false;
+            (this.startGameScreen as any)._settingsMenu.visible = true;
+        };
+
+        this.startGameScreen.onVolumeChange = (type, volume) => {
+            if (type === 'bg') {
+                this.soundBoard.setBackgroundVolume(volume);
+            } else {
+                this.soundBoard.setSFXVolume(volume);
+            }
+        };
 
         document.onvisibilitychange = this.onVisibilityChange.bind(this);
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape') {
+                this.togglePause();
+            }
+            if (e.code === 'Space') {
+                if (this.stopTimeClock.parent) {
+                    this.stopTime();
+                }
+            }
+        });
+
+        this.app.ticker.add((delta) => {
+            if (this.stopTimeClock.parent) {
+                const scale = 0.1 + Math.sin(Date.now() / 200) * 0.01;
+                this.stopTimeClock.scale.set(scale);
+            }
+        });
+    }
+
+    private togglePause(): void {
+        if (!this.gameStarted) return;
+        if (this.gamePaused) {
+            this.resumeGame();
+            this.menuButton.visible = true;
+            this.app.stage.removeChild(this.startGameScreen);
+        } else {
+            this.pauseGame();
+            this.menuButton.visible = false;
+            this.startGameScreen.setResume(true);
+            this.app.stage.addChild(this.startGameScreen);
+            this.app.stage.setChildIndex(this.menuButton, this.app.stage.children.length - 1);
+        }
     }
 
     private onVisibilityChange(): void {
+        if (!this.gameStarted) return;
+
         if (document.hidden) {
-            this.pauseGame();
+            if (!this.gamePaused) {
+                this.pauseGame();
+                this.autoPaused = true;
+            }
         } else {
-            this.resumeGame();
+            if (this.autoPaused) {
+                this.resumeGame();
+                this.autoPaused = false;
+            }
         }
     }
 
     private pauseGame(): void {
         this.gamePaused = true;
-        this.app.ticker.stop();
         this.soundBoard.pauseBackgroundMusic();
     }
 
     private resumeGame(): void {
         this.gamePaused = false;
-        this.app.ticker.start();
         this.soundBoard.resumeBackgroundMusic();
     }
 
@@ -143,12 +232,16 @@ export class Application {
     }
 
     private init(): void {
+        if (this.gameStarted && !this.gamePaused) return;
+        this.gameStarted = true;
+        this.menuButton.visible = true;
+        this.app.stage.removeChild(this.startGameScreen);
         this.moveSpeed = 4;
         this.animationSpeed = 0.5;
         this.timeStopped = false;
         this.gamePaused = false;
 
-        this.soundBoard.playBackgroundMusic();
+        this.soundBoard.startNewGameMusic();
 
         this.intervals.push(setInterval(() => {
             if (this.gamePaused) {
@@ -174,6 +267,9 @@ export class Application {
     }
 
     private clear(): void {
+        this.gameStarted = false;
+        this.startGameScreen.setResume(false);
+        this.app.stage.addChild(this.startGameScreen);
         this.intervals.forEach(clearInterval);
         this.app.ticker.remove(this.tickerCallback);
         this.birbs.forEach(birb => {
@@ -248,7 +344,7 @@ export class Application {
         }
 
         if (this.info.score % 30 === 0) {
-            if (this.app.stage.children.indexOf(this.stopTimeClock) === -1) {
+            if (!this.stopTimeClock.parent) {
                 this.app.stage.addChild(this.stopTimeClock);
             }
         }
@@ -292,7 +388,11 @@ export class Application {
     }
 
     private onGameEnd(score: number): void {
+        if (score > this.highScore) {
+            this.highScore = score;
+            localStorage.setItem('highScore', this.highScore.toString());
+        }
+        this.endGameScreen.setScore(score, this.highScore);
         this.app.stage.addChild(this.endGameScreen);
-        this.endGameScreen.setScore(score);
     }
 }
