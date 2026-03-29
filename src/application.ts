@@ -63,7 +63,12 @@ export class Application {
             this.app.screen.height + this.birbBoundsPadding * 2
         );
 
-        const background = new PIXI.Sprite(PIXI.Texture.from('assets/background.jpg'));
+        const backgrounds = [
+            'assets/backgrounds/background_0.jpg',
+            'assets/backgrounds/background_1.jpg',
+        ];
+        const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+        const background = new PIXI.Sprite(PIXI.Texture.from(randomBackground));
         background.width = window.innerWidth;
         background.height = window.innerHeight;
 
@@ -225,7 +230,7 @@ export class Application {
             this.app.stage.removeChild(this.stopTimeClock);
             this.app.stage.removeChild(this.stopTimeText);
         }
-        
+
         this.soundBoard.muffSounds();
 
         const oldSpeed = this.moveSpeed;
