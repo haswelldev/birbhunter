@@ -8,6 +8,7 @@ import { InfoDisplay } from './service/InfoDisplay';
 import { StartGameScreen } from './models/StartGameScreen';
 import { EndGameScreen } from './models/EndGameScreen';
 import { Birb } from './models/Birb';
+import { DIFFICULTY_CONFIG, DifficultySettings } from './config/DifficultyConfig';
 
 const random = {
     int: (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min,
@@ -28,10 +29,13 @@ export class Application {
     private startGameScreen: StartGameScreen;
     private endGameScreen: EndGameScreen;
     private stopTimeClock: PIXI.Sprite;
+    private stopTimeCharges: number = 0;
+    private stopTimeText: PIXI.Text;
     private menuButton: PIXI.Text;
     private gameStarted: boolean = false;
     private autoPaused: boolean = false;
     private highScore: number = 0;
+    private difficultySettings: DifficultySettings;
 
     @inject(Types.ModelCreator) private modelCreator: ModelCreator;
     @inject(Types.SoundBoard) private soundBoard: SoundBoard;
@@ -79,6 +83,16 @@ export class Application {
         this.stopTimeClock.cursor = 'pointer';
         this.stopTimeClock.x = window.innerWidth / 2;
         this.stopTimeClock.y = window.innerHeight - (window.innerHeight * 13.5 / 100);
+
+        this.stopTimeText = new PIXI.Text('x0', {
+            fontSize: 18,
+            fill: 0xffffff,
+            stroke: 0x000000,
+            strokeThickness: 2
+        });
+        this.stopTimeText.anchor.set(0.5);
+        this.stopTimeText.x = this.stopTimeClock.x + 20;
+        this.stopTimeText.y = this.stopTimeClock.y + 20;
 
         this.menuButton = new PIXI.Text('Menu', { fontSize: 24, fill: 0xffffff });
         this.menuButton.x = 20;
@@ -132,6 +146,10 @@ export class Application {
             } else {
                 this.soundBoard.setSFXVolume(volume);
             }
+        };
+
+        this.startGameScreen.onDifficultyChange = (difficulty) => {
+            console.log(`Difficulty changed to ${difficulty}`);
         };
 
         document.onvisibilitychange = this.onVisibilityChange.bind(this);
@@ -196,11 +214,18 @@ export class Application {
     }
 
     private stopTime(): void {
-        if (this.timeStopped) {
+        if (this.timeStopped || this.stopTimeCharges <= 0) {
             return;
         }
         this.timeStopped = true;
-        this.app.stage.removeChild(this.stopTimeClock);
+        this.stopTimeCharges--;
+        this.stopTimeText.text = `x${this.stopTimeCharges}`;
+
+        if (this.stopTimeCharges <= 0) {
+            this.app.stage.removeChild(this.stopTimeClock);
+            this.app.stage.removeChild(this.stopTimeText);
+        }
+        
         this.soundBoard.muffSounds();
 
         const oldSpeed = this.moveSpeed;
@@ -210,14 +235,16 @@ export class Application {
         this.animationSpeed = 0.2;
 
         this.birbs.forEach(b => {
-            b.turningSpeed = 0;
-            b.speed = 2;
-            b.sprite.animationSpeed = 0.2;
+            if (b) {
+                b.turningSpeed = 0;
+                b.speed = 2;
+                b.sprite.animationSpeed = 0.2;
+            }
         });
 
         this.intervals.push(setTimeout(() => {
             this.resumeTime(oldSpeed, oldAnimationSpeed);
-        }, 4000));
+        }, this.difficultySettings.timeStopDuration));
     }
 
     private resumeTime(speed: number, animationSpeed: number): void {
@@ -236,9 +263,13 @@ export class Application {
         this.gameStarted = true;
         this.menuButton.visible = true;
         this.app.stage.removeChild(this.startGameScreen);
-        this.moveSpeed = 4;
+
+        this.difficultySettings = DIFFICULTY_CONFIG[this.startGameScreen.selectedDifficulty];
+        this.moveSpeed = this.difficultySettings.initialMoveSpeed;
         this.animationSpeed = 0.5;
         this.timeStopped = false;
+        this.stopTimeCharges = 0;
+        this.stopTimeText.text = `x${this.stopTimeCharges}`;
         this.gamePaused = false;
 
         this.soundBoard.startNewGameMusic();
@@ -247,17 +278,17 @@ export class Application {
             if (this.gamePaused) {
                 return;
             }
-            this.moveSpeed += 0.1;
-        }, 4000));
+            this.moveSpeed += this.difficultySettings.speedIncrement;
+        }, this.difficultySettings.speedIncrementInterval));
 
-        this.intervals.push(setInterval(this.createBirb.bind(this), 3000));
+        this.intervals.push(setInterval(this.createBirb.bind(this), this.difficultySettings.initialSpawnInterval));
 
         this.intervals.push(setInterval(() => {
             if (this.gamePaused) {
                 return;
             }
-            this.intervals.push(setInterval(this.createBirb.bind(this), random.int(3000, 30000)));
-        }, 10000));
+            this.intervals.push(setTimeout(this.createBirb.bind(this), random.int(this.difficultySettings.extraSpawnIntervalRange[0], this.difficultySettings.extraSpawnIntervalRange[1])));
+        }, this.difficultySettings.extraSpawnInterval));
 
         this.app.ticker.add(this.tickerCallback);
         this.info.init(this.app);
@@ -281,6 +312,7 @@ export class Application {
         this.intervals = [];
         this.info.clear(this.app);
         this.app.stage.removeChild(this.stopTimeClock);
+        this.app.stage.removeChild(this.stopTimeText);
         this.soundBoard.stopBackgroundMusic();
         this.soundBoard.unmuffSounds();
     }
@@ -339,14 +371,19 @@ export class Application {
         this.soundBoard.playPewSound();
         this.info.incrementScore();
 
-        if (this.info.score % 10 === 0) {
+        if (this.info.score % this.difficultySettings.extraHealthThreshold === 0) {
             this.info.incrementLives();
+            this.info.showMessage(`${this.info.score} birbs down, +1 extra health.`);
         }
 
-        if (this.info.score % 30 === 0) {
+        if (this.info.score % this.difficultySettings.timeStopThreshold === 0) {
+            this.stopTimeCharges++;
+            this.stopTimeText.text = `x${this.stopTimeCharges}`;
             if (!this.stopTimeClock.parent) {
                 this.app.stage.addChild(this.stopTimeClock);
+                this.app.stage.addChild(this.stopTimeText);
             }
+            this.info.showTimeStopNotification();
         }
 
         this.app.stage.removeChild(birb.sprite);
@@ -361,6 +398,7 @@ export class Application {
         } else {
             this.soundBoard.playDamageSound();
             this.info.decrementLives();
+            this.info.showMessage("-1 Health. Birb got trough");
             this.app.stage.removeChild(birb.sprite);
             delete this.birbs[index];
 

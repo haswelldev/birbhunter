@@ -22,7 +22,6 @@ export class SoundBoard {
     private sfxVolume: number = 0.3;
     private pewSound: sound.Sound;
     private damagedSound: sound.Sound;
-    private stopTimeSound: sound.Sound;
 
     constructor() {
         this.loadSettings();
@@ -37,11 +36,6 @@ export class SoundBoard {
                 volume: this.sfxVolume,
                 preload: true
             });
-            this.stopTimeSound = sound.Sound.from({
-                url: 'assets/sound/stop-time.mp3',
-                volume: this.sfxVolume,
-                preload: true
-            });
         } catch (e) {
             console.error('Failed to initialize sounds:', e);
         }
@@ -50,11 +44,17 @@ export class SoundBoard {
     private loadSettings(): void {
         const musicVol = localStorage.getItem('musicVolume');
         if (musicVol !== null) {
-            this.backgroundVolume = parseFloat(musicVol);
+            const parsed = parseFloat(musicVol);
+            if (!isNaN(parsed)) {
+                this.backgroundVolume = parsed;
+            }
         }
         const sfxVol = localStorage.getItem('sfxVolume');
         if (sfxVol !== null) {
-            this.sfxVolume = parseFloat(sfxVol);
+            const parsed = parseFloat(sfxVol);
+            if (!isNaN(parsed)) {
+                this.sfxVolume = parsed;
+            }
         }
     }
 
@@ -181,14 +181,7 @@ export class SoundBoard {
         this.sfxVolume = volume;
         if (this.pewSound) this.pewSound.volume = volume;
         if (this.damagedSound) this.damagedSound.volume = volume;
-        if (this.stopTimeSound) this.stopTimeSound.volume = volume;
         this.saveSettings();
-    }
-
-    public playStopTimeMusic(): void {
-        if (this.stopTimeSound && this.stopTimeSound.isLoaded) {
-            this.stopTimeSound.play();
-        }
     }
 
     public playBackgroundMusic(): void {
