@@ -7,8 +7,6 @@ export class InfoDisplay {
     private _lives: number;
     private infoScore: PIXI.Text;
     private infoLives: PIXI.Text;
-    private infoMessage: PIXI.Text;
-    private messageTimeout: any;
     private pixiApp: PIXI.Application;
     private floatingNotificationTickers: ((delta: number) => void)[] = [];
 
@@ -34,11 +32,11 @@ export class InfoDisplay {
     public decrementLives(): void {
         this._lives--;
         this.infoLives.text = `Healths: ${this._lives}`;
-        this.showFloatingNotification("-1 HP", 0xff0000, this.infoLives.x + this.infoLives.width / 2, this.infoLives.y - 20);
+        this.showFloatingNotification("-1 Health. Birb got trough", 0xff0000, this.infoLives.x + this.infoLives.width / 2, this.infoLives.y - 20);
     }
 
     public showTimeStopNotification(): void {
-        this.showFloatingNotification("Time stop charge added!", 0xffa500, this.pixiApp.screen.width / 2, this.pixiApp.screen.height - (this.pixiApp.screen.height * 20 / 100));
+        this.showFloatingNotification("Time stop charge added!", 0xffa500, this.infoLives.x + this.infoLives.width / 2, this.infoLives.y - 40);
     }
 
     private showFloatingNotification(text: string, color: number, x: number, y: number): void {
@@ -75,16 +73,8 @@ export class InfoDisplay {
         this.pixiApp.ticker.add(ticker);
     }
 
-    public showMessage(text: string, duration: number = 3000): void {
-        if (this.messageTimeout) {
-            clearTimeout(this.messageTimeout);
-        }
-        this.infoMessage.text = text;
-        this.infoMessage.alpha = 1;
-        this.messageTimeout = setTimeout(() => {
-            this.infoMessage.alpha = 0;
-            this.messageTimeout = null;
-        }, duration);
+    public showMessage(text: string): void {
+        this.showFloatingNotification(text, 0xffffff, this.infoLives.x + this.infoLives.width / 2, this.infoLives.y - 20);
     }
 
     public init(app: PIXI.Application): void {
@@ -101,35 +91,18 @@ export class InfoDisplay {
             fill: 0x00ba08,
             align: 'center'
         });
-        this.infoMessage = new PIXI.Text('', {
-            fontSize: 32,
-            fill: 0xffffff,
-            align: 'center',
-            stroke: 0x000000,
-            strokeThickness: 4
-        });
         this.infoLives.x = (app.screen.width * 4 / 100);
         this.infoLives.y = app.screen.height - (app.screen.height * 10 / 100);
         this.infoScore.x = app.screen.width - (app.screen.width * 20 / 100);
         this.infoScore.y = app.screen.height - (app.screen.height * 10 / 100);
 
-        this.infoMessage.anchor.set(0.5);
-        this.infoMessage.x = app.screen.width / 2;
-        this.infoMessage.y = app.screen.height / 3;
-        this.infoMessage.alpha = 0;
-
         app.stage.addChild(this.infoLives);
         app.stage.addChild(this.infoScore);
-        app.stage.addChild(this.infoMessage);
     }
 
     public clear(app: PIXI.Application): void {
         app.stage.removeChild(this.infoLives);
         app.stage.removeChild(this.infoScore);
-        app.stage.removeChild(this.infoMessage);
-        if (this.messageTimeout) {
-            clearTimeout(this.messageTimeout);
-        }
         this.floatingNotificationTickers.forEach(ticker => {
             this.pixiApp.ticker.remove(ticker);
         });

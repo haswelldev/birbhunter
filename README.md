@@ -1,5 +1,9 @@
 # Birb Hunter
 
+[![Deploy to GitHub Pages](https://github.com/haswelldev/birbhunter/actions/workflows/deploy.yml/badge.svg)](https://github.com/haswelldev/birbhunter/actions/workflows/deploy.yml)
+
+Play the game here: [https://haswelldev.github.io/birbhunter/](https://haswelldev.github.io/birbhunter/)
+
 Birb Hunter is a mobile game developed using the Apache Cordova framework and PixiJS for high-performance 2D graphics. This project is optimized for both Android and iOS devices.
 
 ## Table of Contents

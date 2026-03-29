@@ -378,7 +378,6 @@ export class Application {
 
         if (this.info.score % this.difficultySettings.extraHealthThreshold === 0) {
             this.info.incrementLives();
-            this.info.showMessage(`${this.info.score} birbs down, +1 extra health.`);
         }
 
         if (this.info.score % this.difficultySettings.timeStopThreshold === 0) {
@@ -403,7 +402,6 @@ export class Application {
         } else {
             this.soundBoard.playDamageSound();
             this.info.decrementLives();
-            this.info.showMessage("-1 Health. Birb got trough");
             this.app.stage.removeChild(birb.sprite);
             delete this.birbs[index];
 
