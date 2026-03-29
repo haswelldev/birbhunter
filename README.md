@@ -17,10 +17,14 @@ Birb Hunter is a mobile game developed using the Apache Cordova framework and Pi
 Birb Hunter is an interactive 2D mobile game featuring bird hunting mechanics, complete with animations, sound effects, and music. The project is structured as a Cordova-based web application with bundled assets and JavaScript.
 
 ### Key Features
-- High-performance 2D rendering with PixiJS.
-- Cross-platform support for mobile devices.
-- Comprehensive sound system and animated sprites.
-- Extensive integration with mobile device features via Cordova plugins.
+- **High-performance 2D rendering** with PixiJS.
+- **Cross-platform support** for Android, iOS, and Browser.
+- **Multi-charge Time Stop System**: Accumulate time stop charges and use them strategically.
+- **Dynamic Difficulty**: Multiple difficulty levels (Easy, Medium, Hard, Nightmare) with scaling speed and spawn rates.
+- **Visual Notifications**: Floating health (+1/-1 HP) and time stop charge notifications.
+- **Atmospheric Backgrounds**: Multiple pixelated dark forest backgrounds selected randomly at start.
+- **Comprehensive Sound System**: Immersive background music and sound effects (SFX).
+- **In-game Menu**: Pause, resume, and adjust volumes on the fly.
 
 ## Tech Stack
 - **Framework**: [Apache Cordova](https://cordova.apache.org/) / PhoneGap
@@ -153,6 +157,13 @@ To run tests:
 npm test
 ```
 - Alternatively, open `spec/runner.html` (if available) in a browser.
+
+## Deployment
+
+### GitHub Pages
+The project is configured to automatically deploy to GitHub Pages on every push to the `main` branch via GitHub Actions.
+
+Repository URL: [https://github.com/haswelldev/birbhunter](https://github.com/haswelldev/birbhunter)
 
 ## Environment Variables
 > **TODO**: No specific environment variables detected. Document any required API keys or environment-specific configurations here.
