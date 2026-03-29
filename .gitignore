@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# Build artifacts
+dist/
+www/
+bundle.js
+vendors~main.bundle.js
+main.*.js
+vendors~main.*.js
+
+# Cordova
+platforms/
+plugins/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+server.log

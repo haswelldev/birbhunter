@@ -1,0 +1,65 @@
+{
+  "name": "birb-hunter",
+  "version": "1.0.0",
+  "description": "Birb Hunter is a mobile game developed using the Apache Cordova framework and PixiJS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "make clean",
+    "webpack": "webpack",
+    "build": "npm run webpack && cordova build",
+    "build:android": "cordova build android",
+    "build:ios": "cordova build ios",
+    "build:browser": "npm run webpack",
+    "run:browser": "npx http-server www -o",
+    "serve": "npm run run:browser"
+  },
+  "keywords": [
+    "cordova",
+    "pixijs",
+    "game",
+    "mobile"
+  ],
+  "author": "PhoneGap Team",
+  "license": "ISC",
+  "devDependencies": {
+    "copy-webpack-plugin": "^14.0.0",
+    "cordova": "^12.0.0",
+    "cordova-browser": "^7.0.0",
+    "html-webpack-plugin": "^5.6.6",
+    "jasmine-core": "^4.0.0",
+    "ts-loader": "^9.0.0",
+    "typescript": "^5.0.0",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^5.0.0"
+  },
+  "dependencies": {
+    "@pixi/sound": "^5.0.0",
+    "inversify": "^6.0.1",
+    "pixi.js": "^7.0.0",
+    "random": "^3.0.6",
+    "reflect-metadata": "^0.1.13"
+  },
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-battery-status": {},
+      "cordova-plugin-camera": {},
+      "cordova-plugin-device": {},
+      "cordova-plugin-dialogs": {},
+      "cordova-plugin-file": {},
+      "cordova-plugin-fullscreen": {},
+      "cordova-plugin-globalization": {},
+      "cordova-plugin-inappbrowser": {},
+      "cordova-plugin-media-capture": {},
+      "cordova-plugin-network-information": {},
+      "cordova-plugin-screen-orientation": {},
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-vibration": {}
+    },
+    "platforms": [
+      "android",
+      "ios",
+      "browser"
+    ]
+  }
+}
