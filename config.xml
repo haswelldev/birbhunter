@@ -19,4 +19,7 @@
     <preference name="fullscreen" value="true" />
     <preference name="android-minSdkVersion" value="14" />
     <preference name="orientation" value="landscape" />
+    <platform name="electron">
+        <preference name="ElectronSettingsFilePath" value="res/electron/settings.json" />
+    </platform>
 </widget>
