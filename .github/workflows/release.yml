@@ -15,9 +15,9 @@ jobs:
           - os: windows-latest
             platform: win
             build_script: build:electron-win
-          - os: macos-latest
-            platform: mac
-            build_script: build:electron-mac
+#          - os: macos-latest
+#            platform: mac
+#            build_script: build:electron-mac
           - os: ubuntu-latest
             platform: linux
             build_script: build:electron-linux
